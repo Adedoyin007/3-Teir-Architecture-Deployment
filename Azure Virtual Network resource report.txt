@@ -1,0 +1,43 @@
+Azure Virtual Network resource report:
+
+⸻
+
+VNet Resource Report
+
+Virtual Network
+
+* Name: asiwajuvn
+* Resource Group: VnetRG
+* Location: East US
+* Address Space (CIDR): 10.0.0.0/16
+* Subnets Count: 3
+
+⸻
+
+Subnets
+
+Subnet Name	CIDR Range	Available IPs	Notes
+WebSubnet	10.0.1.0/24	250	Associated with Web tier
+AppSubnet	10.0.2.0/24	250	Associated with App tier
+DbSubnet	10.0.3.0/24	251	Associated with Database tier
+
+⸻
+
+Additional Observations
+
+* DNS: Azure-provided DNS
+* DDoS Protection: Not configured
+* Azure Firewall: Not configured
+* Peering: Not configured
+* Private Endpoints: Not configured
+
+⸻
+
+Summary
+
+* Flat /16 VNet segmented into 3 tiered /24 subnets (Web, App, DB)
+* No advanced network security or private connectivity features enabled yet
+* Suitable baseline for a 3-tier architecture, but missing:
+    * Network security controls (NSGs / Firewall)
+    * Private access (Private Endpoints)
+    * DDoS protection

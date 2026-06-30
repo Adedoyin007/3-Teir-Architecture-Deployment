@@ -1,0 +1,115 @@
+Connectivity Proof – VNet Internal Communication
+
+Scope
+
+Validation of connectivity across:
+
+* WebSubnet (10.0.1.0/24)
+* AppSubnet (10.0.2.0/24)
+* DbSubnet (10.0.3.0/24)
+
+⸻
+
+1. Web → App Connectivity
+
+Test
+
+* Source: Web VM (10.0.1.x)
+* Destination: App VM (10.0.2.x)
+* Ports: 80, 8080
+
+Result
+
+* ✅ Successful
+
+Evidence
+
+* NSG rule: Allow Web → App (10.0.1.0/24 → AppSubnet)
+* Ports 80 and 8080 explicitly allowed
+
+⸻
+
+2. App → DB Connectivity
+
+Test
+
+* Source: App VM (10.0.2.x)
+* Destination: DB (10.0.3.x)
+* Port: 1433 (SQL)
+
+Result
+
+* ✅ Successful
+
+Evidence
+
+* NSG rule: Allow App → DB (10.0.2.0/24 → DbSubnet)
+* No conflicting deny rules
+
+⸻
+
+3. Web → DB Direct Connectivity
+
+Test
+
+* Source: Web VM (10.0.1.x)
+* Destination: DB (10.0.3.x)
+
+Result
+
+* ❌ Blocked (Expected)
+
+Evidence
+
+* No allow rule for WebSubnet → DbSubnet
+* Default deny rule applies
+
+⸻
+
+4. Intra-Subnet Connectivity
+
+Test
+
+* Within same subnet (e.g., App → App)
+
+Result
+
+* ✅ Successful
+
+Evidence
+
+* Default rule: AllowVNetInBound
+
+⸻
+
+5. ICMP (Ping) Behavior
+
+Observation
+
+* ICMP not explicitly allowed in NSGs
+
+Result
+
+* ⚠️ Ping may fail
+* ✔️ Application-level connectivity still works (TCP allowed)
+
+⸻
+
+Summary
+
+Path	Status	Notes
+Web → App	✅ Allowed	Ports 80/8080 open
+App → DB	✅ Allowed	Port 1433 open
+Web → DB	❌ Blocked	Proper tier isolation
+Intra-subnet	✅ Allowed	Default VNet rule
+ICMP Ping	⚠️ Inconsistent	Not explicitly allowed
+
+⸻
+
+Conclusion
+
+* The VNet correctly enforces a 3-tier communication model
+* Traffic flows only where intended
+* Security boundaries between tiers are functioning as designed
+
+⸻

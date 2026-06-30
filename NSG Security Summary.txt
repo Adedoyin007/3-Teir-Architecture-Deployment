@@ -1,0 +1,139 @@
+NSG Security Summary
+
+1. WebSubnet → WebSubnet-NSG
+
+Inbound Rules
+
+Priority	Rule	Source	Port	Action
+100	Allow HTTP	Any	80	Allow
+110	Allow HTTPS	Any	443	Allow
+120	Allow RDP (external IP)	102.88.115.160	3389	Allow
+300	Allow RDP (internal IP)	102.90.103.200	3389	Allow
+4000	Deny All	Any	Any	Deny
+
+Outbound Rules
+
+* Default Azure rules (Allow VNet, Allow Internet, Deny All fallback)
+
+Security Assessment
+
+* Public web access correctly enabled (80/443)
+* ⚠️ RDP exposed to public IP → security risk
+* No application gateway / WAF in front
+
+⸻
+
+2. AppSubnet → AppSubnet-NSG
+
+Inbound Rules
+
+Priority	Rule	Source	Port	Action
+100	Allow Web → App	10.0.1.0/24	8080	Allow
+130	Allow HTTP from Internet	Any	80	Allow
+200	Allow Web → App (HTTP)	10.0.1.0/24	80	Allow
+210	Allow RDP (external IP)	102.90.103.200	3389	Allow
+300	Allow RDP	Any	3389	Allow
+65500	Allow VNet	VirtualNetwork	Any	Allow
+65501	Allow Azure LB	AzureLoadBalancer	Any	Allow
+65500+	Deny All	Any	Any	Deny
+
+Outbound Rules
+
+* Default Azure rules
+
+Security Assessment
+
+* App tier allows traffic from Web tier (correct)
+* ⚠️ Internet access to port 80 → should not be public
+* ⚠️ RDP open broadly (including ANY) → high risk
+
+⸻
+
+3. DbSubnet → DbSubnet-NSG
+
+Inbound Rules
+
+Priority	Rule	Source	Port	Action
+100	Allow App → DB	10.0.2.0/24	1433	Allow
+65500	Allow VNet	VirtualNetwork	Any	Allow
+65501	Allow Azure LB	AzureLoadBalancer	Any	Allow
+65500+	Deny All	Any	Any	Deny
+
+Outbound Rules
+
+* Default Azure rules
+
+Security Assessment
+
+* DB correctly restricted to App subnet
+* No public exposure (good)
+* Follows proper tier isolation
+
+⸻
+
+Overall Security Posture
+
+Strengths
+
+* Clear 3-tier segmentation (Web → App → DB)
+* DB tier properly restricted
+* NSGs applied per subnet
+
+⸻
+
+Critical Risks
+
+1. RDP Exposure
+    * Present on Web + App subnets
+    * Includes open or broad source ranges
+        → Replace with Azure Bastion
+2. App Tier Public Access
+    * Port 80 open to Internet
+        → Should only accept traffic from WebSubnet
+3. Lack of Egress Control
+    * No outbound restrictions
+        → Add firewall or UDR controls
+
+⸻
+
+Recommended Fixes (Priority Order)
+
+Immediate
+
+* Remove all RDP (3389) inbound rules
+* Restrict AppSubnet:
+    * Remove Any → 80
+    * Keep only WebSubnet → AppSubnet
+
+⸻
+
+Short Term
+
+* Deploy Azure Bastion
+* Add NSG outbound deny + allow list
+* Enable NSG flow logs
+
+⸻
+
+Medium Term
+
+* Add:
+    * Azure Firewall
+    * Private Endpoints (DB, Storage, Key Vault)
+    * Application Gateway (WAF) in front of Web tier
+
+⸻
+
+Final Security Model (Target)
+
+Internet
+   ↓
+Application Gateway (WAF)
+   ↓
+WebSubnet (no RDP)
+   ↓
+AppSubnet (no internet access)
+   ↓
+DbSubnet (private only)
+
+⸻
